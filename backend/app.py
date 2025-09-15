@@ -2,7 +2,6 @@
 BioQuery Assistant - Flask Backend
 AI-powered research assistant for molecular biology queries.
 """
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
@@ -11,22 +10,23 @@ import requests
 import json
 import re
 
-# Import our custom modules
 from prompts.bio_prompts import get_prompt, classify_query_type
 from services.ncbi_service import NCBIService
 
-from flask_cors import CORS
-CORS(app, origins=["https://bioquery-frontend.onrender.com"])
-
-
-# Load environment variables
 load_dotenv('.env')
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend communication
+
+# Apply CORS **after** app is defined
+CORS(
+    app,
+    resources={r"/*": {"origins": ["https://bioquery-frontend.onrender.com", "*"]}},
+    supports_credentials=False
+)
 
 # Initialize NCBI service
 ncbi_service = NCBIService()
+
 
 def format_response(response_text):
     """Format AI responses to look more professional and structured."""
