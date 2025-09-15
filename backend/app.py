@@ -15,7 +15,7 @@ from prompts.bio_prompts import get_prompt, classify_query_type
 from services.ncbi_service import NCBIService
 
 # Load environment variables
-load_dotenv()
+load_dotenv('../.env')
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
