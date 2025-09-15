@@ -2,26 +2,14 @@ services:
   - type: web
     name: bioquery-backend
     env: docker
-    plan: free
-    repo: https://github.com/your-username/bioquery-assistant
-    branch: main
     dockerfilePath: ./Dockerfile.backend
+    plan: free
     envVars:
       - key: OPENAI_API_KEY
         sync: false
-      - key: FLASK_ENV
-        value: production
-      - key: USE_MOCK_AI
-        value: false
-    healthCheckPath: /
 
   - type: web
     name: bioquery-frontend
     env: docker
-    plan: free
-    repo: https://github.com/your-username/bioquery-assistant
-    branch: main
     dockerfilePath: ./Dockerfile.frontend
-    envVars:
-      - key: REACT_APP_API_URL
-        value: https://bioquery-backend.onrender.com
+    plan: free
