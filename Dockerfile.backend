@@ -7,5 +7,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ .
 
-EXPOSE 5000
-CMD ["python", "app.py"]
+# Render provides $PORT automatically
+CMD ["gunicorn", "-b", "0.0.0.0:${PORT}", "app:app"]
