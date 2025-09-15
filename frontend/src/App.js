@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Send, Beaker, BookOpen, Cpu, HelpCircle } from 'lucide-react';
+import { Send, Beaker, BookOpen, Cpu, HelpCircle, Plus } from 'lucide-react';
 import './App.css';
 
 // Configure axios base URL
@@ -14,6 +14,17 @@ function App() {
   const [includeLiterature, setIncludeLiterature] = useState(false);
   const [examples, setExamples] = useState({});
   const [apiStatus, setApiStatus] = useState('checking');
+  const [currentView, setCurrentView] = useState('welcome'); // 'welcome' or 'chat'
+  const messagesEndRef = useRef(null);
+
+  // Auto-scroll to bottom of messages
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Check API health on mount
   useEffect(() => {
@@ -46,6 +57,11 @@ function App() {
 
   const sendMessage = async (messageText = inputMessage) => {
     if (!messageText.trim()) return;
+
+    // Switch to chat view if we're on welcome
+    if (currentView === 'welcome') {
+      setCurrentView('chat');
+    }
 
     const userMessage = {
       id: Date.now(),
@@ -99,6 +115,16 @@ function App() {
     sendMessage(exampleText);
   };
 
+  const handleNewChat = () => {
+    setMessages([]);
+    setCurrentView('welcome');
+    setInputMessage('');
+  };
+
+  const handleLogoClick = () => {
+    setCurrentView('welcome');
+  };
+
   const getQueryTypeIcon = (queryType) => {
     switch (queryType) {
       case 'pcr_troubleshooting': return <Cpu className="w-4 h-4" />;
@@ -127,12 +153,113 @@ function App() {
     }
   };
 
+  const renderWelcomeScreen = () => (
+    <div className="welcome-section">
+      <div className="welcome-card">
+        <div className="welcome-header">
+          <Beaker className="w-6 h-6" />
+          <h2>Welcome to BioQuery Assistant</h2>
+        </div>
+        <p>Your AI-powered research companion for molecular biology, experimental design, and scientific literature analysis.</p>
+        
+        <div className="features-highlight">
+          <div className="feature-item">
+            <Cpu className="feature-icon" />
+            <span>PCR Troubleshooting</span>
+          </div>
+          <div className="feature-item">
+            <Beaker className="feature-icon" />
+            <span>Experiment Design</span>
+          </div>
+          <div className="feature-item">
+            <BookOpen className="feature-icon" />
+            <span>Literature Search</span>
+          </div>
+        </div>
+        
+        <div className="examples-grid">
+          {Object.entries(examples).map(([category, categoryExamples]) => (
+            <div key={category} className="example-category">
+              <h3>{category.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</h3>
+              {categoryExamples.slice(0, 2).map((example, index) => (
+                <button
+                  key={index}
+                  className="example-button"
+                  onClick={() => handleExampleClick(example)}
+                >
+                  <HelpCircle className="example-icon" />
+                  {example}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderChatScreen = () => (
+    <div className="chat-container">
+      <div className="chat-header">
+        <div className="chat-title">Conversation</div>
+        <button className="new-chat-button" onClick={handleNewChat}>
+          <Plus className="w-4 h-4" />
+          New Chat
+        </button>
+      </div>
+      <div className="messages-container">
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`message ${message.sender} ${message.isError ? 'error' : ''}`}
+          >
+            <div className="message-content">
+              {message.sender === 'assistant' && message.queryType && (
+                <div className="message-meta">
+                  {getQueryTypeIcon(message.queryType)}
+                  <span>{getQueryTypeLabel(message.queryType)}</span>
+                  {message.literatureIncluded && (
+                    <span className="literature-badge">Literature Included</span>
+                  )}
+                </div>
+              )}
+              <div className="message-text">
+                {message.text}
+              </div>
+              <div className="message-timestamp">
+                {message.timestamp.toLocaleTimeString()}
+                {message.usage && (
+                  <span className="token-usage">
+                    • {message.usage.total_tokens} tokens
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+        {isLoading && (
+          <div className="message assistant">
+            <div className="message-content loading-message">
+              <div className="loading-animation">
+                <div className="dna-spinner"></div>
+                <div className="loading-text">
+                  <span className="loading-dots">Analyzing your query</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+    </div>
+  );
+
   return (
     <div className="App">
       <div className="container">
         <header className="app-header">
           <div className="header-content">
-            <div className="logo-section">
+            <div className="logo-section" onClick={handleLogoClick}>
               <Beaker className="logo-icon" />
               <div>
                 <h1>BioQuery Assistant</h1>
@@ -153,69 +280,7 @@ function App() {
         </header>
 
         <main className="app-main">
-          {messages.length === 0 ? (
-            <div className="welcome-section">
-              <div className="welcome-card">
-                <h2>Welcome to BioQuery Assistant!</h2>
-                <p>Get expert guidance on molecular biology techniques, experimental design, and research planning.</p>
-                
-                <div className="examples-grid">
-                  {Object.entries(examples).map(([category, categoryExamples]) => (
-                    <div key={category} className="example-category">
-                      <h3>{category.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</h3>
-                      {categoryExamples.slice(0, 2).map((example, index) => (
-                        <button
-                          key={index}
-                          className="example-button"
-                          onClick={() => handleExampleClick(example)}
-                        >
-                          {example}
-                        </button>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="chat-container">
-              <div className="messages-container">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`message ${message.sender} ${message.isError ? 'error' : ''} fade-in`}
-                  >
-                    <div className="message-content">
-                      {message.sender === 'assistant' && message.queryType && (
-                        <div className="message-meta">
-                          {getQueryTypeIcon(message.queryType)}
-                          <span>{getQueryTypeLabel(message.queryType)}</span>
-                          {message.literatureIncluded && (
-                            <span className="literature-badge">📚 Literature Included</span>
-                          )}
-                        </div>
-                      )}
-                      <div className="message-text">
-                        {message.text}
-                      </div>
-                      <div className="message-timestamp">
-                        {message.timestamp.toLocaleTimeString()}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {isLoading && (
-                  <div className="message assistant fade-in">
-                    <div className="message-content">
-                      <div className="message-text">
-                        <span className="loading-dots">Analyzing your query</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {currentView === 'welcome' ? renderWelcomeScreen() : renderChatScreen()}
         </main>
 
         <footer className="app-footer">
@@ -227,24 +292,33 @@ function App() {
                   checked={includeLiterature}
                   onChange={(e) => setIncludeLiterature(e.target.checked)}
                 />
-                Include recent literature
+                <span className="toggle-text">
+                  <BookOpen className="w-4 h-4" />
+                  Include recent literature
+                </span>
               </label>
             </div>
             <div className="input-container">
-              <input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Ask about PCR troubleshooting, experimental design, protocols..."
-                className="message-input"
-                disabled={isLoading || apiStatus !== 'connected'}
-              />
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  placeholder="Ask about PCR troubleshooting, experimental design, protocols..."
+                  className="message-input"
+                  disabled={isLoading || apiStatus !== 'connected'}
+                />
+              </div>
               <button
                 type="submit"
                 className="send-button"
                 disabled={isLoading || !inputMessage.trim() || apiStatus !== 'connected'}
               >
-                <Send className="w-5 h-5" />
+                {isLoading ? (
+                  <div className="spinner"></div>
+                ) : (
+                  <Send className="w-5 h-5" />
+                )}
               </button>
             </div>
           </form>
