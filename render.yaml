@@ -1,17 +1,22 @@
 services:
+  # ==== Backend (Flask + Gunicorn) ====
   - type: web
     name: bioquery-backend
     env: docker
     dockerfilePath: ./Dockerfile.backend
     plan: free
-    branch: main
     envVars:
       - key: OPENAI_API_KEY
-        sync: false
+        sync: false   # You’ll paste your real key in the Render dashboard
+      - key: PORT
+        value: 5000   # Render overrides this dynamically, but keeps local fallback
 
+  # ==== Frontend (React + Nginx) ====
   - type: web
     name: bioquery-frontend
     env: docker
     dockerfilePath: ./Dockerfile.frontend
     plan: free
-    branch: main
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://bioquery-backend.onrender.com
