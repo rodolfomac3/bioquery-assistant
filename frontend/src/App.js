@@ -1,12 +1,183 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Send, Beaker, BookOpen, Cpu, HelpCircle, Plus } from 'lucide-react';
+import { 
+  Send, Beaker, BookOpen, Cpu, HelpCircle, Plus, Menu, Trash2, 
+  Copy, RefreshCw, Bookmark, Zap, Calculator, Mic, Paperclip, 
+  Search, Settings, Download 
+} from 'lucide-react';
 import './App.css';
 
 // Configure axios base URL
 const API_BASE_URL = 'http://localhost:5001';
 axios.defaults.baseURL = API_BASE_URL;
 
+// Chat History Sidebar Component
+const ChatHistorySidebar = ({ chatHistory, currentChatId, onSelectChat, onDeleteChat, isOpen, onToggle }) => {
+  return (
+    <div className={`chat-sidebar ${isOpen ? 'open' : 'closed'}`}>
+      <div className="sidebar-header">
+        <button className="toggle-sidebar" onClick={onToggle}>
+          <Menu className="w-5 h-5" />
+        </button>
+        <h3>Chat History</h3>
+      </div>
+      <div className="chat-list">
+        {chatHistory.map(chat => (
+          <div 
+            key={chat.id}
+            className={`chat-item ${chat.id === currentChatId ? 'active' : ''}`}
+            onClick={() => onSelectChat(chat.id)}
+          >
+            <div className="chat-preview">
+              <div className="chat-title">{chat.title}</div>
+              <div className="chat-timestamp">{chat.timestamp}</div>
+            </div>
+            <button 
+              className="delete-chat"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteChat(chat.id);
+              }}
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Message Actions Component
+const MessageActions = ({ message, onCopy, onRegenerate, onSave }) => {
+  const [showActions, setShowActions] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(message.text);
+    onCopy && onCopy(message.text);
+  };
+
+  return (
+    <div 
+      className="message-actions-container"
+      onMouseEnter={() => setShowActions(true)}
+      onMouseLeave={() => setShowActions(false)}
+    >
+      {showActions && (
+        <div className="message-actions">
+          <button className="action-btn" onClick={handleCopy} title="Copy">
+            <Copy className="w-4 h-4" />
+          </button>
+          {message.sender === 'assistant' && (
+            <button className="action-btn" onClick={() => onRegenerate(message)} title="Regenerate">
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          )}
+          <button className="action-btn" onClick={() => onSave(message)} title="Save">
+            <Bookmark className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Quick Actions Component
+const QuickActions = ({ onQuickAction }) => {
+  const quickActions = [
+    { icon: Zap, label: "PCR Help", action: "pcr_help" },
+    { icon: Beaker, label: "Protocol", action: "protocol" },
+    { icon: BookOpen, label: "Literature", action: "literature" },
+    { icon: Calculator, label: "Calculate", action: "calculate" }
+  ];
+
+  return (
+    <div className="quick-actions">
+      {quickActions.map(({ icon: Icon, label, action }) => (
+        <button
+          key={action}
+          className="quick-action-btn"
+          onClick={() => onQuickAction(action)}
+          title={label}
+        >
+          <Icon className="w-4 h-4" />
+          <span>{label}</span>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// Enhanced Input Component
+const EnhancedInput = ({ 
+  value, 
+  onChange, 
+  onSubmit, 
+  disabled, 
+  suggestions = [], 
+  onSuggestionClick 
+}) => {
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
+
+  useEffect(() => {
+    if (value.length > 2) {
+      const filtered = suggestions.filter(s => 
+        s.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredSuggestions(filtered.slice(0, 5));
+      setShowSuggestions(filtered.length > 0);
+    } else {
+      setShowSuggestions(false);
+    }
+  }, [value, suggestions]);
+
+  return (
+    <div className="enhanced-input-container">
+      {showSuggestions && (
+        <div className="suggestions-dropdown">
+          {filteredSuggestions.map((suggestion, index) => (
+            <button
+              key={index}
+              className="suggestion-item"
+              onClick={() => onSuggestionClick(suggestion)}
+            >
+              <HelpCircle className="w-4 h-4" />
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      )}
+      <form onSubmit={onSubmit} className="enhanced-input-form">
+        <div className="input-wrapper">
+          <input
+            type="text"
+            value={value}
+            onChange={onChange}
+            placeholder="Ask about PCR, cloning, Western blots..."
+            className="message-input enhanced"
+            disabled={disabled}
+            onFocus={() => value.length > 2 && setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+          />
+          <div className="input-features">
+            <button type="button" className="feature-btn" title="Voice Input">
+              <Mic className="w-4 h-4" />
+            </button>
+            <button type="button" className="feature-btn" title="Attach File">
+              <Paperclip className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        <button type="submit" className="send-button enhanced" disabled={disabled || !value.trim()}>
+          <Send className="w-5 h-5" />
+        </button>
+      </form>
+    </div>
+  );
+};
+
+// Main App Component
 function App() {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -14,10 +185,49 @@ function App() {
   const [includeLiterature, setIncludeLiterature] = useState(false);
   const [examples, setExamples] = useState({});
   const [apiStatus, setApiStatus] = useState('checking');
-  const [currentView, setCurrentView] = useState('welcome'); // 'welcome' or 'chat'
+  const [currentView, setCurrentView] = useState('welcome');
+  
+  // Enhanced features state
+  const [chatHistory, setChatHistory] = useState([]);
+  const [currentChatId, setCurrentChatId] = useState(null);
+  const [savedMessages, setSavedMessages] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  
   const messagesEndRef = useRef(null);
 
-  // Auto-scroll to bottom of messages
+  // Common queries for suggestions
+  const commonSuggestions = [
+    "My PCR isn't working, what should I check?",
+    "How do I design primers for PCR?",
+    "What controls should I include in my experiment?",
+    "How do I optimize Western blot conditions?",
+    "What's the best way to isolate RNA?",
+    "How do I calculate molarity?",
+    "What's the difference between qPCR and PCR?",
+    "How do I troubleshoot gel electrophoresis?",
+    "What are the steps for bacterial transformation?",
+    "How do I design a CRISPR experiment?"
+  ];
+
+  // Export chat function
+  const exportChat = (messages, title) => {
+    const chatContent = messages.map(msg => 
+      `${msg.sender.toUpperCase()}: ${msg.text}\nTime: ${msg.timestamp.toLocaleString()}\n\n`
+    ).join('');
+
+    const blob = new Blob([chatContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title || 'bioquery-chat'}-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Auto-scroll to bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -58,8 +268,10 @@ function App() {
   const sendMessage = async (messageText = inputMessage) => {
     if (!messageText.trim()) return;
 
-    // Switch to chat view if we're on welcome
-    if (currentView === 'welcome') {
+    // Create new chat if needed
+    if (currentView === 'welcome' || !currentChatId) {
+      const newChatId = createNewChat(messageText);
+      setCurrentChatId(newChatId);
       setCurrentView('chat');
     }
 
@@ -70,9 +282,15 @@ function App() {
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInputMessage('');
     setIsLoading(true);
+
+    // Update chat history
+    if (currentChatId) {
+      updateChatMessages(currentChatId, newMessages);
+    }
 
     try {
       const response = await axios.post('/api/chat', {
@@ -90,7 +308,13 @@ function App() {
         usage: response.data.usage
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      const finalMessages = [...newMessages, assistantMessage];
+      setMessages(finalMessages);
+      
+      // Update chat history
+      if (currentChatId) {
+        updateChatMessages(currentChatId, finalMessages);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage = {
@@ -100,10 +324,60 @@ function App() {
         timestamp: new Date(),
         isError: true
       };
-      setMessages(prev => [...prev, errorMessage]);
+      
+      const finalMessages = [...newMessages, errorMessage];
+      setMessages(finalMessages);
+      
+      if (currentChatId) {
+        updateChatMessages(currentChatId, finalMessages);
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Chat management functions
+  const createNewChat = (firstMessage) => {
+    const newChat = {
+      id: Date.now(),
+      title: firstMessage.slice(0, 50) + (firstMessage.length > 50 ? '...' : ''),
+      messages: [],
+      timestamp: new Date().toLocaleString(),
+      createdAt: new Date()
+    };
+    setChatHistory(prev => [newChat, ...prev]);
+    return newChat.id;
+  };
+
+  const updateChatMessages = (chatId, messages) => {
+    setChatHistory(prev => 
+      prev.map(chat => 
+        chat.id === chatId ? { ...chat, messages } : chat
+      )
+    );
+  };
+
+  const deleteChat = (chatId) => {
+    setChatHistory(prev => prev.filter(chat => chat.id !== chatId));
+    if (currentChatId === chatId) {
+      setCurrentChatId(null);
+      setMessages([]);
+      setCurrentView('welcome');
+    }
+  };
+
+  const selectChat = (chatId) => {
+    const chat = chatHistory.find(c => c.id === chatId);
+    if (chat) {
+      setCurrentChatId(chatId);
+      setMessages(chat.messages);
+      setCurrentView('chat');
+      setSidebarOpen(false);
+    }
+  };
+
+  const saveMessage = (message) => {
+    setSavedMessages(prev => [...prev, { ...message, savedAt: new Date() }]);
   };
 
   const handleSubmit = (e) => {
@@ -118,6 +392,7 @@ function App() {
   const handleNewChat = () => {
     setMessages([]);
     setCurrentView('welcome');
+    setCurrentChatId(null);
     setInputMessage('');
   };
 
@@ -125,6 +400,35 @@ function App() {
     setCurrentView('welcome');
   };
 
+  const handleQuickAction = (action) => {
+    const quickMessages = {
+      pcr_help: "I'm having trouble with PCR amplification. Can you help me troubleshoot?",
+      protocol: "Can you recommend a standard protocol for DNA extraction?",
+      literature: "Find recent papers about CRISPR applications in gene therapy",
+      calculate: "How do I calculate the molarity of a solution?"
+    };
+    
+    if (quickMessages[action]) {
+      sendMessage(quickMessages[action]);
+    }
+  };
+
+  const handleRegenerateMessage = (message) => {
+    // Find the user message that prompted this response
+    const messageIndex = messages.findIndex(m => m.id === message.id);
+    if (messageIndex > 0) {
+      const userMessage = messages[messageIndex - 1];
+      if (userMessage.sender === 'user') {
+        sendMessage(userMessage.text);
+      }
+    }
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setInputMessage(suggestion);
+  };
+
+  // Helper functions
   const getQueryTypeIcon = (queryType) => {
     switch (queryType) {
       case 'pcr_troubleshooting': return <Cpu className="w-4 h-4" />;
@@ -201,17 +505,30 @@ function App() {
   const renderChatScreen = () => (
     <div className="chat-container">
       <div className="chat-header">
-        <div className="chat-title">Conversation</div>
-        <button className="new-chat-button" onClick={handleNewChat}>
-          <Plus className="w-4 h-4" />
-          New Chat
-        </button>
+        <div className="chat-header-left">
+          <button className="toggle-sidebar" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="chat-title">Conversation</div>
+        </div>
+        <div className="chat-settings">
+          <button className="settings-btn" onClick={() => exportChat(messages, 'bioquery-chat')} title="Export Chat">
+            <Download className="w-4 h-4" />
+          </button>
+          <button className="settings-btn" title="Settings">
+            <Settings className="w-4 h-4" />
+          </button>
+          <button className="new-chat-button" onClick={handleNewChat}>
+            <Plus className="w-4 h-4" />
+            New Chat
+          </button>
+        </div>
       </div>
       <div className="messages-container">
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`message ${message.sender} ${message.isError ? 'error' : ''}`}
+            className={`message message-enhanced ${message.sender} ${message.isError ? 'error' : ''}`}
           >
             <div className="message-content">
               {message.sender === 'assistant' && message.queryType && (
@@ -234,16 +551,24 @@ function App() {
                   </span>
                 )}
               </div>
+              <MessageActions 
+                message={message}
+                onCopy={() => {}}
+                onRegenerate={handleRegenerateMessage}
+                onSave={saveMessage}
+              />
             </div>
           </div>
         ))}
         {isLoading && (
           <div className="message assistant">
-            <div className="message-content loading-message">
-              <div className="loading-animation">
-                <div className="dna-spinner"></div>
-                <div className="loading-text">
-                  <span className="loading-dots">Analyzing your query</span>
+            <div className="message-content">
+              <div className="typing-indicator">
+                <span>BioQuery is thinking</span>
+                <div className="typing-dots">
+                  <div className="typing-dot"></div>
+                  <div className="typing-dot"></div>
+                  <div className="typing-dot"></div>
                 </div>
               </div>
             </div>
@@ -256,6 +581,15 @@ function App() {
 
   return (
     <div className="App">
+      <ChatHistorySidebar 
+        chatHistory={chatHistory}
+        currentChatId={currentChatId}
+        onSelectChat={selectChat}
+        onDeleteChat={deleteChat}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+      />
+      
       <div className="container">
         <header className="app-header">
           <div className="header-content">
@@ -284,6 +618,8 @@ function App() {
         </main>
 
         <footer className="app-footer">
+          <QuickActions onQuickAction={handleQuickAction} />
+          
           <form onSubmit={handleSubmit} className="message-form">
             <div className="form-options">
               <label className="literature-toggle">
@@ -298,29 +634,15 @@ function App() {
                 </span>
               </label>
             </div>
-            <div className="input-container">
-              <div className="input-wrapper">
-                <input
-                  type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder="Ask about PCR troubleshooting, experimental design, protocols..."
-                  className="message-input"
-                  disabled={isLoading || apiStatus !== 'connected'}
-                />
-              </div>
-              <button
-                type="submit"
-                className="send-button"
-                disabled={isLoading || !inputMessage.trim() || apiStatus !== 'connected'}
-              >
-                {isLoading ? (
-                  <div className="spinner"></div>
-                ) : (
-                  <Send className="w-5 h-5" />
-                )}
-              </button>
-            </div>
+            
+            <EnhancedInput 
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onSubmit={handleSubmit}
+              disabled={isLoading || apiStatus !== 'connected'}
+              suggestions={commonSuggestions}
+              onSuggestionClick={handleSuggestionClick}
+            />
           </form>
         </footer>
       </div>
