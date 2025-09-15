@@ -15,6 +15,10 @@ import re
 from prompts.bio_prompts import get_prompt, classify_query_type
 from services.ncbi_service import NCBIService
 
+from flask_cors import CORS
+CORS(app, origins=["https://bioquery-frontend.onrender.com"])
+
+
 # Load environment variables
 load_dotenv('.env')
 
