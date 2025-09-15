@@ -9,13 +9,14 @@ import os
 from dotenv import load_dotenv
 import requests
 import json
+import re
 
 # Import our custom modules
 from prompts.bio_prompts import get_prompt, classify_query_type
 from services.ncbi_service import NCBIService
 
 # Load environment variables
-load_dotenv('../.env')
+load_dotenv('.env')
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
@@ -23,12 +24,38 @@ CORS(app)  # Enable CORS for frontend communication
 # Initialize NCBI service
 ncbi_service = NCBIService()
 
+def format_response(response_text):
+    """Format AI responses to look more professional and structured."""
+    
+    # Add proper spacing around numbered lists
+    response_text = re.sub(r'(\d+\.)\s*\*\*([^*]+)\*\*:', r'\n\1 **\2**:\n', response_text)
+    
+    # Format mathematical formulas
+    response_text = re.sub(r'\\?\[([^]]+)\\?\]', r'<div class="formula">\1</div>', response_text)
+    
+    # Format step numbers
+    response_text = re.sub(r'^(\d+)\.\s+\*\*([^*]+)\*\*:', r'<span class="step-number">\1</span>**\2**:', response_text, flags=re.MULTILINE)
+    
+    # Format notes and warnings
+    response_text = re.sub(r'\*Note:([^*]+)\*', r'<div class="note">📝 **Note:** \1</div>', response_text)
+    response_text = re.sub(r'\*Warning:([^*]+)\*', r'<div class="warning">⚠️ **Warning:** \1</div>', response_text)
+    response_text = re.sub(r'\*Tip:([^*]+)\*', r'<div class="tip">💡 **Tip:** \1</div>', response_text)
+    
+    # Add better spacing
+    response_text = re.sub(r'\n\n+', '\n\n', response_text)
+    
+    return response_text.strip()
+
 def call_openai_api(messages, max_tokens=1000, temperature=0.7):
+    user_message = messages[-1]['content'] if messages else "No message"
+    print(f"DEBUG: Processing query: '{user_message[:50]}...'")
     """
     Call OpenAI API using requests with fallback to mock responses.
     """
     api_key = os.getenv('OPENAI_API_KEY')
-    use_mock = os.getenv('USE_MOCK_AI', 'false').lower() == 'true'
+    use_mock = False  # FORCE DISABLE MOCK MODE
+    
+    print(f"DEBUG: use_mock={use_mock}, has_api_key={bool(api_key)}")
     
     # If using mock mode or no API key, return mock response
     if use_mock or not api_key:
@@ -54,95 +81,30 @@ def call_openai_api(messages, max_tokens=1000, temperature=0.7):
             timeout=30
         )
         
-        if response.status_code == 429:  # Quota exceeded
-            print("API quota exceeded, falling back to mock response")
-            return get_mock_response(messages)
+        print(f"DEBUG: Status Code: {response.status_code}")
+        print(f"DEBUG: Response Text: {response.text[:200]}")
         
         if response.status_code != 200:
-            raise Exception(f"OpenAI API error: {response.status_code} - {response.text}")
+            print(f"REAL API ERROR: {response.status_code} - {response.text}")
+            return get_mock_response(messages)
         
         return response.json()
         
     except Exception as e:
-        print(f"API call failed: {e}, using mock response")
+        print(f"REQUEST EXCEPTION: {e}")
         return get_mock_response(messages)
 
 def get_mock_response(messages):
-    """Generate a mock response based on the query type."""
-    user_message = messages[-1]['content'].lower()
+    """Generate a simple mock response (only used for API failures)."""
+    user_message = messages[-1]['content'] if messages else "No message"
     
-    if 'pcr' in user_message:
-        mock_content = """For PCR troubleshooting, here are the most common issues to check:
+    mock_content = f"""I'm currently experiencing technical difficulties connecting to the AI service. 
 
-1. **Primer Issues**: Verify primer concentration (0.1-1 μM final), check for primer dimers, ensure proper annealing temperature (usually Tm - 5°C).
+Your question: "{user_message}"
 
-2. **Template Quality**: Check DNA concentration and purity (A260/A280 ratio should be 1.8-2.0). Try diluting template if concentration is too high.
+This is a temporary fallback response. Please try again in a moment, or check that the backend service is running properly.
 
-3. **Reaction Components**: 
-   - Verify polymerase activity and storage
-   - Check dNTP concentrations (200 μM each)
-   - Ensure proper buffer and MgCl2 concentration (1.5-2.5 mM)
-
-4. **Thermal Cycling**: 
-   - Initial denaturation: 95°C for 3-5 min
-   - Denaturation: 95°C for 30 sec
-   - Annealing: Primer Tm - 5°C for 30 sec
-   - Extension: 72°C for 1 min/kb
-
-5. **Controls**: Always include positive and negative controls.
-
-Try these systematically, changing one variable at a time to identify the issue."""
-    
-    elif 'crispr' in user_message:
-        mock_content = """For CRISPR experiments, consider these key points:
-
-1. **Guide RNA Design**: Use online tools like Benchling or Chopchop for optimal targeting. Ensure 17-20 bp target sequence with NGG PAM.
-
-2. **Off-target Analysis**: Check for potential off-target sites using tools like COSMID or Cas-OFFinder.
-
-3. **Delivery Method**: Choose appropriate method (transfection, electroporation, viral delivery) based on cell type.
-
-4. **Controls**: Include untransfected cells, cells with Cas9 only, and non-targeting guide controls.
-
-5. **Validation**: Plan for PCR amplification and sequencing of target region, plus functional assays if relevant.
-
-6. **Timing**: Harvest cells 48-72 hours post-transfection for analysis."""
-    
-    elif 'experimental design' in user_message or 'control' in user_message:
-        mock_content = """Good experimental design principles:
-
-1. **Define Clear Hypothesis**: State exactly what you're testing.
-
-2. **Controls**:
-   - Negative control (no treatment)
-   - Positive control (known effect)
-   - Vehicle control (if using solvents)
-   - Untreated control
-
-3. **Replication**:
-   - Biological replicates: Independent samples (n≥3)
-   - Technical replicates: Same sample measured multiple times
-
-4. **Randomization**: Randomize sample processing order and placement.
-
-5. **Blinding**: Process samples without knowing treatment groups when possible.
-
-6. **Statistical Power**: Calculate required sample size before starting.
-
-7. **Standardization**: Keep all variables constant except the one being tested."""
-    
-    else:
-        mock_content = f"""Thank you for your question about molecular biology. Here's some general guidance:
-
-Based on your query, I recommend:
-1. Reviewing standard protocols for your specific technique
-2. Ensuring proper controls are included
-3. Checking reagent quality and storage conditions
-4. Following established troubleshooting guides
-
-For specific techniques like PCR, Western blotting, or cell culture, there are well-established protocols that can help guide your approach.
-
-*Note: This is a mock response for development. The full AI integration will provide more detailed, personalized advice.*"""
+*Note: This is a temporary mock response due to API connectivity issues.*"""
     
     return {
         'choices': [{
@@ -179,6 +141,15 @@ def chat():
         query_type = classify_query_type(user_message)
         system_prompt = get_prompt(query_type)
         
+        # For non-biology questions, use a general assistant prompt
+        if query_type == "general_bio" and not any(keyword in user_message.lower() for keyword in [
+            'biology', 'dna', 'rna', 'protein', 'gene', 'pcr', 'crispr', 'cell', 'molecular', 
+            'biochemistry', 'genetics', 'experiment', 'lab', 'assay', 'culture', 'western',
+            'blot', 'electrophoresis', 'cloning', 'transfection', 'molarity', 'concentration',
+            'primer', 'sequencing', 'plasmid', 'vector', 'enzyme', 'antibody', 'microscopy'
+        ]):
+            system_prompt = """You are a helpful AI assistant. Answer questions accurately and helpfully across all topics. Be concise but thorough in your responses. When dealing with scientific or technical questions, provide clear explanations with proper formatting."""
+        
         # Optionally include recent literature
         literature_context = ""
         if include_literature:
@@ -207,7 +178,9 @@ def chat():
         # Get response from OpenAI using our custom function
         response_data = call_openai_api(messages)
         
-        assistant_message = response_data['choices'][0]['message']['content']
+        # Format the response for better presentation
+        raw_message = response_data['choices'][0]['message']['content']
+        assistant_message = format_response(raw_message)
         usage = response_data.get('usage', {})
         
         return jsonify({
@@ -307,4 +280,4 @@ if __name__ == '__main__':
     else:
         print(f"OpenAI API key loaded: {api_key[:10]}...")
     
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=True, host='0.0.0.0', port=5002)

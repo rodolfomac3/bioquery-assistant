@@ -3,12 +3,12 @@ import axios from 'axios';
 import { 
   Send, Beaker, BookOpen, Cpu, HelpCircle, Plus, Menu, Trash2, 
   Copy, RefreshCw, Bookmark, Zap, Calculator, Mic, Paperclip, 
-  Search, Settings, Download 
+  Settings, Download 
 } from 'lucide-react';
 import './App.css';
 
 // Configure axios base URL
-const API_BASE_URL = 'http://localhost:5001';
+const API_BASE_URL = 'http://localhost:5002';
 axios.defaults.baseURL = API_BASE_URL;
 
 // Chat History Sidebar Component
@@ -109,6 +109,8 @@ const QuickActions = ({ onQuickAction }) => {
 };
 
 // Enhanced Input Component
+// Fixed Enhanced Input Component with proper suggestions filtering
+
 const EnhancedInput = ({ 
   value, 
   onChange, 
@@ -121,26 +123,62 @@ const EnhancedInput = ({
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
 
   useEffect(() => {
-    if (value.length > 2) {
-      const filtered = suggestions.filter(s => 
-        s.toLowerCase().includes(value.toLowerCase())
-      );
+    console.log('Input value:', value); // Debug
+    console.log('Available suggestions:', suggestions); // Debug
+    
+    if (value.length > 2 && suggestions.length > 0) {
+      const filtered = suggestions.filter(s => {
+        if (!s || typeof s !== 'string') return false;
+        return s.toLowerCase().includes(value.toLowerCase());
+      });
+      
+      console.log('Filtered suggestions:', filtered); // Debug
       setFilteredSuggestions(filtered.slice(0, 5));
       setShowSuggestions(filtered.length > 0);
     } else {
       setShowSuggestions(false);
+      setFilteredSuggestions([]);
     }
   }, [value, suggestions]);
 
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowSuggestions(false); // Hide suggestions on submit
+    if (onSubmit && !disabled && value.trim()) {
+      onSubmit(e);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setShowSuggestions(false);
+    if (onSuggestionClick) {
+      onSuggestionClick(suggestion);
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (value.length > 2 && filteredSuggestions.length > 0) {
+      setShowSuggestions(true);
+    }
+  };
+
+  const handleInputBlur = () => {
+    // Delay hiding to allow clicking on suggestions
+    setTimeout(() => setShowSuggestions(false), 200);
+  };
+
   return (
     <div className="enhanced-input-container">
-      {showSuggestions && (
+      {showSuggestions && filteredSuggestions.length > 0 && (
         <div className="suggestions-dropdown">
           {filteredSuggestions.map((suggestion, index) => (
             <button
               key={index}
+              type="button"
               className="suggestion-item"
-              onClick={() => onSuggestionClick(suggestion)}
+              onClick={() => handleSuggestionClick(suggestion)}
+              onMouseDown={(e) => e.preventDefault()} // Prevent blur on click
             >
               <HelpCircle className="w-4 h-4" />
               {suggestion}
@@ -148,7 +186,7 @@ const EnhancedInput = ({
           ))}
         </div>
       )}
-      <form onSubmit={onSubmit} className="enhanced-input-form">
+      <form onSubmit={handleFormSubmit} className="enhanced-input-form">
         <div className="input-wrapper">
           <input
             type="text"
@@ -157,8 +195,8 @@ const EnhancedInput = ({
             placeholder="Ask about PCR, cloning, Western blots..."
             className="message-input enhanced"
             disabled={disabled}
-            onFocus={() => value.length > 2 && setShowSuggestions(true)}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
           />
           <div className="input-features">
             <button type="button" className="feature-btn" title="Voice Input">
@@ -169,7 +207,11 @@ const EnhancedInput = ({
             </button>
           </div>
         </div>
-        <button type="submit" className="send-button enhanced" disabled={disabled || !value.trim()}>
+        <button 
+          type="submit" 
+          className="send-button enhanced" 
+          disabled={disabled || !value.trim()}
+        >
           <Send className="w-5 h-5" />
         </button>
       </form>
@@ -618,33 +660,31 @@ function App() {
         </main>
 
         <footer className="app-footer">
-          <QuickActions onQuickAction={handleQuickAction} />
-          
-          <form onSubmit={handleSubmit} className="message-form">
-            <div className="form-options">
-              <label className="literature-toggle">
-                <input
-                  type="checkbox"
-                  checked={includeLiterature}
-                  onChange={(e) => setIncludeLiterature(e.target.checked)}
-                />
-                <span className="toggle-text">
-                  <BookOpen className="w-4 h-4" />
-                  Include recent literature
-                </span>
-              </label>
-            </div>
-            
-            <EnhancedInput 
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onSubmit={handleSubmit}
-              disabled={isLoading || apiStatus !== 'connected'}
-              suggestions={commonSuggestions}
-              onSuggestionClick={handleSuggestionClick}
-            />
-          </form>
-        </footer>
+  <QuickActions onQuickAction={handleQuickAction} />
+  
+  <div className="form-options">
+    <label className="literature-toggle">
+      <input
+        type="checkbox"
+        checked={includeLiterature}
+        onChange={(e) => setIncludeLiterature(e.target.checked)}
+      />
+      <span className="toggle-text">
+        <BookOpen className="w-4 h-4" />
+        Include recent literature
+      </span>
+    </label>
+  </div>
+  
+  <EnhancedInput 
+    value={inputMessage}
+    onChange={(e) => setInputMessage(e.target.value)}
+    onSubmit={handleSubmit}
+    disabled={isLoading || apiStatus !== 'connected'}
+    suggestions={commonSuggestions}
+    onSuggestionClick={handleSuggestionClick}
+  />
+</footer>
       </div>
     </div>
   );
