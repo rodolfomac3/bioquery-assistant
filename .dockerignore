@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Environment & config
+.env
+.env.*
+*.DS_Store
+
+# Git
+.git
+.gitignore
+
+# Mac cruft
+__MACOSX
