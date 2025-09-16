@@ -8,11 +8,10 @@ import {
 import './App.css';
 
 // Configure axios base URL
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002';
+const API_BASE_URL = process.env.REACT_APP_API_URL || '__API_URL__';
+console.log("🔎 Using API_BASE_URL:", API_BASE_URL);
 axios.defaults.baseURL = API_BASE_URL;
 
-console.log("🔎 Render API URL:", process.env.REACT_APP_API_URL);
-console.log("🔎 Using API_BASE_URL:", API_BASE_URL);
 
 // Chat History Sidebar Component
 const ChatHistorySidebar = ({ chatHistory, currentChatId, onSelectChat, onDeleteChat, isOpen, onToggle }) => {
