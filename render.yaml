@@ -7,16 +7,11 @@ services:
     envVars:
       - key: OPENAI_API_KEY
         sync: false
-
+  
   - type: web
     name: bioquery-frontend
     env: docker
     dockerfilePath: ./Dockerfile.frontend
     plan: free
-    build:
-      docker:
-        buildArgs:
-          REACT_APP_API_URL: https://bioquery-backend.onrender.com
-    envVars:
-      - key: REACT_APP_API_URL
-        value: https://bioquery-backend.onrender.com
+    dockerContext: .
+    buildCommand: docker build --build-arg REACT_APP_API_URL=https://bioquery-backend.onrender.com -f ./Dockerfile.frontend .
