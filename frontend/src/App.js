@@ -8,7 +8,7 @@ import {
 import './App.css';
 
 // Configure axios base URL
-const API_BASE_URL = process.env.REACT_APP_API_URL || '__API_URL__';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://bioquery-backend.onrender.com';
 console.log("🔎 Using API_BASE_URL:", API_BASE_URL);
 axios.defaults.baseURL = API_BASE_URL;
 
