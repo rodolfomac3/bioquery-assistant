@@ -16,7 +16,7 @@ services:
     envVars:
       - key: REACT_APP_API_URL
         value: https://bioquery-backend.onrender.com
-    docker:
-      buildArgs:
-        - key: REACT_APP_API_URL
-          value: https://bioquery-backend.onrender.com
+    build:
+      docker:
+        buildArgs:
+          REACT_APP_API_URL: https://bioquery-backend.onrender.com
