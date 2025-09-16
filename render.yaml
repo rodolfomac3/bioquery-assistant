@@ -6,7 +6,7 @@ services:
     plan: free
     envVars:
       - key: OPENAI_API_KEY
-        sync: false   # you set this in Render dashboard
+        sync: false   # set this in Render dashboard
 
   - type: web
     name: bioquery-frontend
@@ -16,3 +16,6 @@ services:
     envVars:
       - key: REACT_APP_API_URL
         value: https://bioquery-backend.onrender.com
+    buildCommand: |
+      echo "Using REACT_APP_API_URL=$REACT_APP_API_URL"
+      npm run build
