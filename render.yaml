@@ -13,13 +13,10 @@ services:
     env: docker
     dockerfilePath: ./Dockerfile.frontend
     plan: free
-    buildCommand: npm run build
     envVars:
       - key: REACT_APP_API_URL
         value: https://bioquery-backend.onrender.com
-
-build:
-      docker:
-        buildArgs:
-          - key: REACT_APP_API_URL
-            value: https://bioquery-backend.onrender.com
+    docker:
+      buildArgs:
+        - key: REACT_APP_API_URL
+          value: https://bioquery-backend.onrender.com
