@@ -585,7 +585,7 @@ function App() {
                 </div>
               )}
               <div className="message-text">
-                {message.text}
+                dangerouslySetInnerHTML={{ __html: message.text }}
               </div>
               <div className="message-timestamp">
                 {message.timestamp.toLocaleTimeString()}
