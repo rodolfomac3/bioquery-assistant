@@ -5,14 +5,17 @@ COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ .
 
-ARG REACT_APP_API_URL
+# Build with placeholder instead of localhost
+ARG REACT_APP_API_URL=__API_URL__
 ENV REACT_APP_API_URL=$REACT_APP_API_URL
-
-# Explicitly inject env into build
-RUN echo "Building frontend with API URL=$REACT_APP_API_URL" \
-    && REACT_APP_API_URL=$REACT_APP_API_URL npm run build
+RUN npm run build
 
 FROM nginx:1.27-alpine
 COPY --from=build /app/build /usr/share/nginx/html
+
+# Add entrypoint script for runtime substitution
+COPY frontend/env.sh /docker-entrypoint.d/99-env.sh
+RUN chmod +x /docker-entrypoint.d/99-env.sh
+
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
