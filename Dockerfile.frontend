@@ -5,12 +5,12 @@ COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ .
 
-# Inject backend API URL at build time
+# Accept build arg and pass it through to React
 ARG REACT_APP_API_URL
-ENV REACT_APP_API_URL=${REACT_APP_API_URL}
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
 
-RUN echo "🔎 Building with REACT_APP_API_URL=$REACT_APP_API_URL" \
-  && npm run build
+# Debug: log the URL before build
+RUN echo "🔎 Building with REACT_APP_API_URL=$REACT_APP_API_URL" && npm run build
 
 FROM nginx:1.27-alpine
 COPY --from=build /app/build /usr/share/nginx/html
