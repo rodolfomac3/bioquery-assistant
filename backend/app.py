@@ -17,66 +17,49 @@ load_dotenv('.env')
 
 app = Flask(__name__)
 
-# Apply CORS **after** app is defined
+# CORS for frontend (Render + local dev)
 CORS(
     app,
-    resources={r"/*": {"origins": ["https://bioquery-frontend.onrender.com", "*"]}},
+    resources={r"/*": {"origins": [
+        "https://bioquery-frontend.onrender.com",
+        "http://localhost:3000"
+    ]}},
     supports_credentials=False
 )
 
-# Initialize NCBI service
 ncbi_service = NCBIService()
 
 
 def format_response(response_text):
-    """Format AI responses to look more professional and structured."""
-    
-    # Add proper spacing around numbered lists
     response_text = re.sub(r'(\d+\.)\s*\*\*([^*]+)\*\*:', r'\n\1 **\2**:\n', response_text)
-    
-    # Format mathematical formulas
     response_text = re.sub(r'\\?\[([^]]+)\\?\]', r'<div class="formula">\1</div>', response_text)
-    
-    # Format step numbers
     response_text = re.sub(r'^(\d+)\.\s+\*\*([^*]+)\*\*:', r'<span class="step-number">\1</span>**\2**:', response_text, flags=re.MULTILINE)
-    
-    # Format notes and warnings
     response_text = re.sub(r'\*Note:([^*]+)\*', r'<div class="note">📝 **Note:** \1</div>', response_text)
     response_text = re.sub(r'\*Warning:([^*]+)\*', r'<div class="warning">⚠️ **Warning:** \1</div>', response_text)
     response_text = re.sub(r'\*Tip:([^*]+)\*', r'<div class="tip">💡 **Tip:** \1</div>', response_text)
-    
-    # Add better spacing
     response_text = re.sub(r'\n\n+', '\n\n', response_text)
-    
     return response_text.strip()
 
+
 def call_openai_api(messages, max_tokens=1000, temperature=0.7):
-    user_message = messages[-1]['content'] if messages else "No message"
-    print(f"DEBUG: Processing query: '{user_message[:50]}...'")
-    """
-    Call OpenAI API using requests with fallback to mock responses.
-    """
     api_key = os.getenv('OPENAI_API_KEY')
-    use_mock = False  # FORCE DISABLE MOCK MODE
-    
-    print(f"DEBUG: use_mock={use_mock}, has_api_key={bool(api_key)}")
-    
-    # If using mock mode or no API key, return mock response
+    use_mock = False
+
     if use_mock or not api_key:
         return get_mock_response(messages)
-    
+
     headers = {
         'Authorization': f'Bearer {api_key}',
         'Content-Type': 'application/json'
     }
-    
+
     data = {
-        'model': 'gpt-4o-mini',  # Fast and cost-effective
+        'model': 'gpt-4o-mini',
         'messages': messages,
         'max_tokens': max_tokens,
         'temperature': temperature
     }
-    
+
     try:
         response = requests.post(
             'https://api.openai.com/v1/chat/completions',
@@ -84,24 +67,19 @@ def call_openai_api(messages, max_tokens=1000, temperature=0.7):
             json=data,
             timeout=30
         )
-        
-        print(f"DEBUG: Status Code: {response.status_code}")
-        print(f"DEBUG: Response Text: {response.text[:200]}")
-        
+
         if response.status_code != 200:
-            print(f"REAL API ERROR: {response.status_code} - {response.text}")
             return get_mock_response(messages)
-        
+
         return response.json()
-        
-    except Exception as e:
-        print(f"REQUEST EXCEPTION: {e}")
+
+    except Exception:
         return get_mock_response(messages)
 
+
 def get_mock_response(messages):
-    """Generate a simple mock response (only used for API failures)."""
     user_message = messages[-1]['content'] if messages else "No message"
-    
+
     mock_content = f"""I'm currently experiencing technical difficulties connecting to the AI service. 
 
 Your question: "{user_message}"
@@ -109,7 +87,7 @@ Your question: "{user_message}"
 This is a temporary fallback response. Please try again in a moment, or check that the backend service is running properly.
 
 *Note: This is a temporary mock response due to API connectivity issues.*"""
-    
+
     return {
         'choices': [{
             'message': {'content': mock_content}
@@ -121,72 +99,60 @@ This is a temporary fallback response. Please try again in a moment, or check th
         }
     }
 
+
 @app.route('/')
 def health_check():
-    """Basic health check endpoint."""
     return jsonify({
         "status": "healthy",
         "message": "BioQuery Assistant API is running",
         "version": "1.0.0"
     })
 
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    """Main chat endpoint for biological queries."""
     try:
         data = request.get_json()
         user_message = data.get('message', '').strip()
         include_literature = data.get('include_literature', False)
-        
+
         if not user_message:
             return jsonify({"error": "Message is required"}), 400
-        
-        # Classify the query to use appropriate prompt
+
         query_type = classify_query_type(user_message)
         system_prompt = get_prompt(query_type)
-        
-        # For non-biology questions, use a general assistant prompt
+
         if query_type == "general_bio" and not any(keyword in user_message.lower() for keyword in [
-            'biology', 'dna', 'rna', 'protein', 'gene', 'pcr', 'crispr', 'cell', 'molecular', 
+            'biology', 'dna', 'rna', 'protein', 'gene', 'pcr', 'crispr', 'cell', 'molecular',
             'biochemistry', 'genetics', 'experiment', 'lab', 'assay', 'culture', 'western',
             'blot', 'electrophoresis', 'cloning', 'transfection', 'molarity', 'concentration',
             'primer', 'sequencing', 'plasmid', 'vector', 'enzyme', 'antibody', 'microscopy'
         ]):
-            system_prompt = """You are a helpful AI assistant. Answer questions accurately and helpfully across all topics. Be concise but thorough in your responses. When dealing with scientific or technical questions, provide clear explanations with proper formatting."""
-        
-        # Optionally include recent literature
+            system_prompt = """You are a helpful AI assistant. Answer questions accurately and helpfully across all topics."""
+
         literature_context = ""
         if include_literature:
             try:
-                # Extract key terms for literature search
                 search_terms = extract_search_terms(user_message)
                 if search_terms:
                     papers = ncbi_service.get_recent_papers(search_terms, max_results=3)
                     literature_context = ncbi_service.format_articles_for_llm(papers)
-            except Exception as e:
-                print(f"Literature search failed: {e}")
+            except Exception:
                 literature_context = "Literature search unavailable at the moment."
-        
-        # Prepare messages for OpenAI
-        messages = [
-            {"role": "system", "content": system_prompt}
-        ]
-        
-        # Add literature context if available
+
+        messages = [{"role": "system", "content": system_prompt}]
         if literature_context:
             enhanced_message = f"{user_message}\n\nRelevant recent literature:\n{literature_context}"
             messages.append({"role": "user", "content": enhanced_message})
         else:
             messages.append({"role": "user", "content": user_message})
-        
-        # Get response from OpenAI using our custom function
+
         response_data = call_openai_api(messages)
-        
-        # Format the response for better presentation
+
         raw_message = response_data['choices'][0]['message']['content']
         assistant_message = format_response(raw_message)
         usage = response_data.get('usage', {})
-        
+
         return jsonify({
             "response": assistant_message,
             "query_type": query_type,
@@ -197,38 +163,35 @@ def chat():
                 "total_tokens": usage.get('total_tokens', 0)
             }
         })
-        
-    except Exception as e:
-        print(f"Error in chat endpoint: {e}")
+
+    except Exception:
         return jsonify({"error": "An error occurred processing your request"}), 500
+
 
 @app.route('/api/search-literature', methods=['POST'])
 def search_literature():
-    """Dedicated endpoint for literature searches."""
     try:
         data = request.get_json()
         query = data.get('query', '').strip()
-        max_results = min(data.get('max_results', 5), 10)  # Cap at 10 for performance
-        
+        max_results = min(data.get('max_results', 5), 10)
+
         if not query:
             return jsonify({"error": "Query is required"}), 400
-        
-        # Search PubMed
+
         papers = ncbi_service.search_pubmed(query, max_results)
-        
+
         return jsonify({
             "query": query,
             "results": papers,
             "count": len(papers)
         })
-        
-    except Exception as e:
-        print(f"Error in literature search: {e}")
+
+    except Exception:
         return jsonify({"error": "Literature search failed"}), 500
+
 
 @app.route('/api/examples', methods=['GET'])
 def get_examples():
-    """Get example queries for different categories."""
     examples = {
         "pcr_troubleshooting": [
             "My PCR isn't working - I'm trying to amplify a 1.2kb fragment from mouse genomic DNA",
@@ -251,41 +214,28 @@ def get_examples():
             "Show me studies comparing different DNA extraction methods"
         ]
     }
-    
+
     return jsonify(examples)
 
+
 def extract_search_terms(query):
-    """Extract key biological terms from user query for literature search."""
-    # Simple keyword extraction - could be enhanced with NLP
     biological_keywords = [
         'CRISPR', 'PCR', 'qPCR', 'RNA-seq', 'DNA', 'RNA', 'protein', 'gene',
         'cloning', 'transfection', 'knockout', 'overexpression', 'primer',
         'sequencing', 'gel electrophoresis', 'Western blot', 'immunofluorescence',
         'cell culture', 'bacterial culture', 'plasmid', 'vector', 'enzyme'
     ]
-    
+
     query_lower = query.lower()
     found_keywords = [kw for kw in biological_keywords if kw.lower() in query_lower]
-    
-    # Return the first few keywords or the original query if no keywords found
+
     if found_keywords:
         return " ".join(found_keywords[:3])
     else:
-        # Extract the first few words as a fallback
         words = query.split()[:5]
         return " ".join(words)
 
-if __name__ == '__main__':
-    # Check if OpenAI API key is set
-    api_key = os.getenv('OPENAI_API_KEY')
-    if not api_key:
-        print("Warning: OPENAI_API_KEY not found in environment variables")
-        print("Please set your OpenAI API key in the .env file")
-    else:
-        print(f"OpenAI API key loaded: {api_key[:10]}...")
-    
-    import os
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Render injects $PORT
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
