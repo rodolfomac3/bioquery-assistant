@@ -11,9 +11,6 @@ import './App.css';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002';
 axios.defaults.baseURL = API_BASE_URL;
 
-
-axios.defaults.baseURL = API_BASE_URL;
-
 // Chat History Sidebar Component
 const ChatHistorySidebar = ({ chatHistory, currentChatId, onSelectChat, onDeleteChat, isOpen, onToggle }) => {
   return (
@@ -289,7 +286,7 @@ function App() {
 
   const checkApiHealth = async () => {
     try {
-      const response = await axios.get('/');
+      const response = await axios.get(`${API_BASE_URL}/`);
       if (response.data.status === 'healthy') {
         setApiStatus('connected');
       } else {
@@ -303,7 +300,7 @@ function App() {
 
   const loadExamples = async () => {
     try {
-      const response = await axios.get('/api/examples');
+      const response = await axios.get(`${API_BASE_URL}/api/examples`);
       setExamples(response.data);
     } catch (error) {
       console.error('Failed to load examples:', error);
@@ -338,7 +335,7 @@ function App() {
     }
 
     try {
-      const response = await axios.post('/api/chat', {
+      const response = await axios.post(`${API_BASE_URL}/api/chat`, {
         message: messageText,
         include_literature: includeLiterature
       });
@@ -663,31 +660,31 @@ function App() {
         </main>
 
         <footer className="app-footer">
-  <QuickActions onQuickAction={handleQuickAction} />
-  
-  <div className="form-options">
-    <label className="literature-toggle">
-      <input
-        type="checkbox"
-        checked={includeLiterature}
-        onChange={(e) => setIncludeLiterature(e.target.checked)}
-      />
-      <span className="toggle-text">
-        <BookOpen className="w-4 h-4" />
-        Include recent literature
-      </span>
-    </label>
-  </div>
-  
-  <EnhancedInput 
-    value={inputMessage}
-    onChange={(e) => setInputMessage(e.target.value)}
-    onSubmit={handleSubmit}
-    disabled={isLoading || apiStatus !== 'connected'}
-    suggestions={commonSuggestions}
-    onSuggestionClick={handleSuggestionClick}
-  />
-</footer>
+          <QuickActions onQuickAction={handleQuickAction} />
+          
+          <div className="form-options">
+            <label className="literature-toggle">
+              <input
+                type="checkbox"
+                checked={includeLiterature}
+                onChange={(e) => setIncludeLiterature(e.target.checked)}
+              />
+              <span className="toggle-text">
+                <BookOpen className="w-4 h-4" />
+                Include recent literature
+              </span>
+            </label>
+          </div>
+          
+          <EnhancedInput 
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            onSubmit={handleSubmit}
+            disabled={isLoading || apiStatus !== 'connected'}
+            suggestions={commonSuggestions}
+            onSuggestionClick={handleSuggestionClick}
+          />
+        </footer>
       </div>
     </div>
   );
