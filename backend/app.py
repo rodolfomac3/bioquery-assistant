@@ -31,17 +31,72 @@ ncbi_service = NCBIService()
 
 
 def format_response(response_text):
+    """Enhanced response formatting with comprehensive structure and visual elements."""
+    
+    # Enhanced step formatting with better visual hierarchy
     response_text = re.sub(r'(\d+\.)\s*\*\*([^*]+)\*\*:', r'\n\1 **\2**:\n', response_text)
+    
+    # Formula and equation formatting
     response_text = re.sub(r'\\?\[([^]]+)\\?\]', r'<div class="formula">\1</div>', response_text)
+    
+    # Enhanced step number formatting
     response_text = re.sub(r'^(\d+)\.\s+\*\*([^*]+)\*\*:', r'<span class="step-number">\1</span>**\2**:', response_text, flags=re.MULTILINE)
+    
+    # Enhanced note formatting with better visual distinction
     response_text = re.sub(r'\*Note:([^*]+)\*', r'<div class="note">📝 **Note:** \1</div>', response_text)
+    
+    # Enhanced warning formatting
     response_text = re.sub(r'\*Warning:([^*]+)\*', r'<div class="warning">⚠️ **Warning:** \1</div>', response_text)
+    
+    # Enhanced tip formatting
     response_text = re.sub(r'\*Tip:([^*]+)\*', r'<div class="tip">💡 **Tip:** \1</div>', response_text)
+    
+    # Add success/validation formatting
+    response_text = re.sub(r'\*Success:([^*]+)\*', r'<div class="success">✅ **Success:** \1</div>', response_text)
+    
+    # Add critical information formatting
+    response_text = re.sub(r'\*Critical:([^*]+)\*', r'<div class="critical">🚨 **Critical:** \1</div>', response_text)
+    
+    # Add protocol step formatting
+    response_text = re.sub(r'\*Protocol:([^*]+)\*', r'<div class="protocol">🧪 **Protocol:** \1</div>', response_text)
+    
+    # Add troubleshooting formatting
+    response_text = re.sub(r'\*Troubleshoot:([^*]+)\*', r'<div class="troubleshoot">🔧 **Troubleshoot:** \1</div>', response_text)
+    
+    # Add validation formatting
+    response_text = re.sub(r'\*Validate:([^*]+)\*', r'<div class="validate">✓ **Validate:** \1</div>', response_text)
+    
+    # Enhanced section header formatting
+    response_text = re.sub(r'\*\*([A-Z][A-Z\s]+):\*\*', r'<h3 class="section-header">\1</h3>', response_text)
+    
+    # Enhanced subsection formatting
+    response_text = re.sub(r'\*\*([A-Z][a-z\s]+):\*\*', r'<h4 class="subsection-header">\1</h4>', response_text)
+    
+    # Add parameter highlighting
+    response_text = re.sub(r'(\w+):\s*([0-9.-]+[°μM%x\s]*[A-Za-z]*)', r'<span class="parameter">\1: \2</span>', response_text)
+    
+    # Add concentration highlighting
+    response_text = re.sub(r'(\d+\.?\d*)\s*(mM|μM|nM|pM|mg/mL|μg/mL|ng/mL|U/μL|units/mL)', r'<span class="concentration">\1 \2</span>', response_text)
+    
+    # Add temperature highlighting
+    response_text = re.sub(r'(\d+\.?\d*)\s*°C', r'<span class="temperature">\1°C</span>', response_text)
+    
+    # Add time highlighting
+    response_text = re.sub(r'(\d+\.?\d*)\s*(min|minute|hr|hour|sec|second|day|week)', r'<span class="time">\1 \2</span>', response_text)
+    
+    # Clean up excessive whitespace
     response_text = re.sub(r'\n\n+', '\n\n', response_text)
+    
+    # Add confidence level indicators
+    response_text = re.sub(r'\(High confidence\)', r'<span class="confidence high">🔴 High Confidence</span>', response_text)
+    response_text = re.sub(r'\(Medium confidence\)', r'<span class="confidence medium">🟡 Medium Confidence</span>', response_text)
+    response_text = re.sub(r'\(Low confidence\)', r'<span class="confidence low">🟢 Low Confidence</span>', response_text)
+    
     return response_text.strip()
 
 
-def call_openai_api(messages, max_tokens=1000, temperature=0.7):
+def call_openai_api(messages, max_tokens=2000, temperature=0.3):
+    """Enhanced API call with optimized parameters for scientific accuracy."""
     api_key = os.getenv('OPENAI_API_KEY')
     use_mock = False
 
@@ -54,10 +109,14 @@ def call_openai_api(messages, max_tokens=1000, temperature=0.7):
     }
 
     data = {
-        'model': 'gpt-4o-mini',
+        'model': 'gpt-4o-mini',  # Using gpt-4o-mini for better performance
         'messages': messages,
         'max_tokens': max_tokens,
-        'temperature': temperature
+        'temperature': temperature,  # Lower temperature for more consistent, factual responses
+        'top_p': 0.9,  # Focus on most likely tokens
+        'frequency_penalty': 0.1,  # Slight penalty to avoid repetition
+        'presence_penalty': 0.1,  # Encourage diverse topics
+        'stop': None  # No stop sequences for scientific content
     }
 
     try:
@@ -128,7 +187,18 @@ def chat():
             'blot', 'electrophoresis', 'cloning', 'transfection', 'molarity', 'concentration',
             'primer', 'sequencing', 'plasmid', 'vector', 'enzyme', 'antibody', 'microscopy'
         ]):
-            system_prompt = """You are a helpful AI assistant. Answer questions accurately and helpfully across all topics."""
+            system_prompt = """
+You are a helpful biology research assistant. 
+When providing step-by-step instructions, use this format:
+
+**Step 1: Symptoms**
+Your content here...
+
+**Step 2: Template** 
+Your content here...
+
+Do NOT use HTML tags. Use Markdown formatting instead.
+"""
 
         literature_context = ""
         if include_literature:
@@ -150,6 +220,15 @@ def chat():
         response_data = call_openai_api(messages)
 
         raw_message = response_data['choices'][0]['message']['content']
+        
+        # Quality control checks
+        quality_score = assess_response_quality(raw_message, query_type)
+        
+        # Apply quality-based formatting
+        if quality_score < 0.7:
+            # Add quality warning to response
+            raw_message = f"*Note: This response may need additional validation. Please cross-reference with primary literature.*\n\n{raw_message}"
+        
         assistant_message = format_response(raw_message)
         usage = response_data.get('usage', {})
 
@@ -157,6 +236,8 @@ def chat():
             "response": assistant_message,
             "query_type": query_type,
             "literature_included": bool(literature_context),
+            "quality_score": quality_score,
+            "confidence_level": get_confidence_level(quality_score),
             "usage": {
                 "prompt_tokens": usage.get('prompt_tokens', 0),
                 "completion_tokens": usage.get('completion_tokens', 0),
@@ -216,6 +297,62 @@ def get_examples():
     }
 
     return jsonify(examples)
+
+
+def assess_response_quality(response_text, query_type):
+    """Assess the quality of AI response based on scientific rigor and completeness."""
+    quality_indicators = {
+        'specificity': 0,
+        'scientific_rigor': 0,
+        'completeness': 0,
+        'actionability': 0,
+        'structure': 0
+    }
+    
+    # Check for specific parameters and values
+    if re.search(r'\d+\.?\d*\s*(mM|μM|nM|°C|min|hr)', response_text):
+        quality_indicators['specificity'] += 0.3
+    
+    # Check for scientific terminology and methodology
+    scientific_terms = ['control', 'replicate', 'validation', 'protocol', 'optimization', 'troubleshooting']
+    if sum(1 for term in scientific_terms if term.lower() in response_text.lower()) >= 3:
+        quality_indicators['scientific_rigor'] += 0.3
+    
+    # Check for structured format
+    if re.search(r'\*\*[A-Z][A-Z\s]+:\*\*', response_text):
+        quality_indicators['structure'] += 0.2
+    
+    # Check for step-by-step instructions
+    if re.search(r'\d+\.\s+', response_text):
+        quality_indicators['actionability'] += 0.2
+    
+    # Check for completeness based on query type
+    if query_type == "pcr_troubleshooting":
+        if all(term in response_text.lower() for term in ['temperature', 'primer', 'template']):
+            quality_indicators['completeness'] += 0.3
+    elif query_type == "experimental_design":
+        if all(term in response_text.lower() for term in ['control', 'replicate', 'sample']):
+            quality_indicators['completeness'] += 0.3
+    elif query_type == "literature_synthesis":
+        if all(term in response_text.lower() for term in ['study', 'research', 'evidence']):
+            quality_indicators['completeness'] += 0.3
+    else:
+        if len(response_text) > 500:  # General bio responses should be comprehensive
+            quality_indicators['completeness'] += 0.3
+    
+    # Calculate overall quality score
+    total_score = sum(quality_indicators.values())
+    return min(total_score, 1.0)  # Cap at 1.0
+
+
+def get_confidence_level(quality_score):
+    """Convert quality score to confidence level."""
+    if quality_score >= 0.8:
+        return "High"
+    elif quality_score >= 0.6:
+        return "Medium"
+    else:
+        return "Low"
 
 
 def extract_search_terms(query):
