@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
 import { 
   Send, Beaker, BookOpen, Cpu, HelpCircle, Plus, Menu, Trash2, 
   Copy, RefreshCw, Bookmark, Zap, Calculator, Mic, Paperclip, 
   Settings, Download 
 } from 'lucide-react';
 import './App.css';
+import 'highlight.js/styles/github.css';
 
 // Configure axios base URL
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://bioquery-backend.onrender.com';
@@ -585,7 +589,35 @@ function App() {
                 </div>
               )}
               <div className="message-text">
-                {message.text}
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeHighlight]}
+                  components={{
+                    h1: ({children}) => <h1 className="markdown-h1">{children}</h1>,
+                    h2: ({children}) => <h2 className="markdown-h2">{children}</h2>,
+                    h3: ({children}) => <h3 className="markdown-h3">{children}</h3>,
+                    h4: ({children}) => <h4 className="markdown-h4">{children}</h4>,
+                    h5: ({children}) => <h5 className="markdown-h5">{children}</h5>,
+                    h6: ({children}) => <h6 className="markdown-h6">{children}</h6>,
+                    p: ({children}) => <p className="markdown-p">{children}</p>,
+                    ul: ({children}) => <ul className="markdown-ul">{children}</ul>,
+                    ol: ({children}) => <ol className="markdown-ol">{children}</ol>,
+                    li: ({children}) => <li className="markdown-li">{children}</li>,
+                    blockquote: ({children}) => <blockquote className="markdown-blockquote">{children}</blockquote>,
+                    code: ({children, className}) => <code className={`markdown-code ${className || ''}`}>{children}</code>,
+                    pre: ({children}) => <pre className="markdown-pre">{children}</pre>,
+                    strong: ({children}) => <strong className="markdown-strong">{children}</strong>,
+                    em: ({children}) => <em className="markdown-em">{children}</em>,
+                    table: ({children}) => <table className="markdown-table">{children}</table>,
+                    thead: ({children}) => <thead className="markdown-thead">{children}</thead>,
+                    tbody: ({children}) => <tbody className="markdown-tbody">{children}</tbody>,
+                    tr: ({children}) => <tr className="markdown-tr">{children}</tr>,
+                    th: ({children}) => <th className="markdown-th">{children}</th>,
+                    td: ({children}) => <td className="markdown-td">{children}</td>
+                  }}
+                >
+                  {message.text}
+                </ReactMarkdown>
               </div>
               <div className="message-timestamp">
                 {message.timestamp.toLocaleTimeString()}

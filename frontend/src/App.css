@@ -1672,3 +1672,203 @@
     font-size: 14px;
   }
 }
+
+/* Markdown Rendering Styles */
+.markdown-h1 {
+  font-size: 1.8em;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0.5em 0;
+  padding-bottom: 0.3em;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.markdown-h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0.8em 0 0.4em 0;
+  padding-bottom: 0.2em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.markdown-h3 {
+  font-size: 1.3em;
+  font-weight: 600;
+  color: #4a5568;
+  margin: 0.6em 0 0.3em 0;
+}
+
+.markdown-h4 {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #4a5568;
+  margin: 0.5em 0 0.2em 0;
+}
+
+.markdown-h5, .markdown-h6 {
+  font-size: 1em;
+  font-weight: 600;
+  color: #4a5568;
+  margin: 0.4em 0 0.2em 0;
+}
+
+.markdown-p {
+  margin: 0.5em 0;
+  line-height: 1.6;
+  color: #2d3748;
+}
+
+.markdown-ul, .markdown-ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.markdown-li {
+  margin: 0.3em 0;
+  line-height: 1.5;
+  color: #2d3748;
+}
+
+.markdown-blockquote {
+  margin: 1em 0;
+  padding: 0.8em 1em;
+  background: #f7fafc;
+  border-left: 4px solid #3182ce;
+  border-radius: 0 8px 8px 0;
+  color: #4a5568;
+  font-style: italic;
+}
+
+.markdown-code {
+  background: #f1f5f9;
+  color: #e53e3e;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9em;
+  border: 1px solid #e2e8f0;
+}
+
+.markdown-pre {
+  background: #1a202c;
+  color: #e2e8f0;
+  padding: 1em;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1em 0;
+  border: 1px solid #2d3748;
+}
+
+.markdown-pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border: none;
+  font-size: 0.9em;
+}
+
+.markdown-strong {
+  font-weight: 700;
+  color: #1a202c;
+}
+
+.markdown-em {
+  font-style: italic;
+  color: #4a5568;
+}
+
+.markdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.markdown-thead {
+  background: #f7fafc;
+}
+
+.markdown-th {
+  padding: 0.8em 1em;
+  text-align: left;
+  font-weight: 600;
+  color: #2d3748;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.markdown-td {
+  padding: 0.8em 1em;
+  border-bottom: 1px solid #e2e8f0;
+  color: #4a5568;
+}
+
+.markdown-tr:hover {
+  background: #f7fafc;
+}
+
+/* Special formatting for scientific content */
+.markdown-blockquote:has(> strong:first-child) {
+  background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+  border-left-color: #e53e3e;
+}
+
+.markdown-blockquote:has(> strong:first-child:contains("Note")) {
+  background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+  border-left-color: #38a169;
+}
+
+.markdown-blockquote:has(> strong:first-child:contains("Warning")) {
+  background: linear-gradient(135deg, #fffaf0 0%, #fbd38d 100%);
+  border-left-color: #dd6b20;
+}
+
+.markdown-blockquote:has(> strong:first-child:contains("Tip")) {
+  background: linear-gradient(135deg, #f0f9ff 0%, #bee3f8 100%);
+  border-left-color: #3182ce;
+}
+
+.markdown-blockquote:has(> strong:first-child:contains("Critical")) {
+  background: linear-gradient(135deg, #fef5e7 0%, #f6ad55 100%);
+  border-left-color: #dd6b20;
+}
+
+.markdown-blockquote:has(> strong:first-child:contains("Protocol")) {
+  background: linear-gradient(135deg, #f7fafc 0%, #e2e8f0 100%);
+  border-left-color: #4a5568;
+}
+
+.markdown-blockquote:has(> strong:first-child:contains("Troubleshoot")) {
+  background: linear-gradient(135deg, #fef7ff 0%, #e9d8fd 100%);
+  border-left-color: #805ad5;
+}
+
+.markdown-blockquote:has(> strong:first-child:contains("Validate")) {
+  background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+  border-left-color: #38a169;
+}
+
+.markdown-blockquote:has(> strong:first-child:contains("Success")) {
+  background: linear-gradient(135deg, #f0fff4 0%, #9ae6b4 100%);
+  border-left-color: #38a169;
+}
+
+/* Code highlighting for scientific parameters */
+.markdown-code:contains("mM"), .markdown-code:contains("μM"), .markdown-code:contains("°C") {
+  background: #e6fffa;
+  color: #234e52;
+  border-color: #38b2ac;
+}
+
+/* Responsive markdown */
+@media (max-width: 768px) {
+  .markdown-h1 { font-size: 1.5em; }
+  .markdown-h2 { font-size: 1.3em; }
+  .markdown-h3 { font-size: 1.2em; }
+  .markdown-h4 { font-size: 1.1em; }
+  .markdown-pre { font-size: 0.8em; }
+  .markdown-table { font-size: 0.9em; }
+}

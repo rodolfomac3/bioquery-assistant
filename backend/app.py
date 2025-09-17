@@ -31,66 +31,75 @@ ncbi_service = NCBIService()
 
 
 def format_response(response_text):
-    """Enhanced response formatting with comprehensive structure and visual elements."""
+    """Enhanced response formatting with professional markdown rendering."""
     
     # Enhanced step formatting with better visual hierarchy
-    response_text = re.sub(r'(\d+\.)\s*\*\*([^*]+)\*\*:', r'\n\1 **\2**:\n', response_text)
+    response_text = re.sub(r'(\d+\.)\s*\*\*([^*]+)\*\*:', r'\n\n### \1 \2\n', response_text)
     
-    # Formula and equation formatting
-    response_text = re.sub(r'\\?\[([^]]+)\\?\]', r'<div class="formula">\1</div>', response_text)
+    # Formula and equation formatting - use code blocks for better rendering
+    response_text = re.sub(r'\\?\[([^]]+)\\?\]', r'`\1`', response_text)
     
-    # Enhanced step number formatting
-    response_text = re.sub(r'^(\d+)\.\s+\*\*([^*]+)\*\*:', r'<span class="step-number">\1</span>**\2**:', response_text, flags=re.MULTILINE)
+    # Enhanced step number formatting for better readability
+    response_text = re.sub(r'^(\d+)\.\s+\*\*([^*]+)\*\*:', r'#### **Step \1: \2**', response_text, flags=re.MULTILINE)
     
     # Enhanced note formatting with better visual distinction
-    response_text = re.sub(r'\*Note:([^*]+)\*', r'<div class="note">📝 **Note:** \1</div>', response_text)
+    response_text = re.sub(r'\*Note:([^*]+)\*', r'\n> 📝 **Note:** \1\n', response_text)
     
     # Enhanced warning formatting
-    response_text = re.sub(r'\*Warning:([^*]+)\*', r'<div class="warning">⚠️ **Warning:** \1</div>', response_text)
+    response_text = re.sub(r'\*Warning:([^*]+)\*', r'\n> ⚠️ **Warning:** \1\n', response_text)
     
     # Enhanced tip formatting
-    response_text = re.sub(r'\*Tip:([^*]+)\*', r'<div class="tip">💡 **Tip:** \1</div>', response_text)
+    response_text = re.sub(r'\*Tip:([^*]+)\*', r'\n> 💡 **Tip:** \1\n', response_text)
     
     # Add success/validation formatting
-    response_text = re.sub(r'\*Success:([^*]+)\*', r'<div class="success">✅ **Success:** \1</div>', response_text)
+    response_text = re.sub(r'\*Success:([^*]+)\*', r'\n> ✅ **Success:** \1\n', response_text)
     
     # Add critical information formatting
-    response_text = re.sub(r'\*Critical:([^*]+)\*', r'<div class="critical">🚨 **Critical:** \1</div>', response_text)
+    response_text = re.sub(r'\*Critical:([^*]+)\*', r'\n> 🚨 **Critical:** \1\n', response_text)
     
     # Add protocol step formatting
-    response_text = re.sub(r'\*Protocol:([^*]+)\*', r'<div class="protocol">🧪 **Protocol:** \1</div>', response_text)
+    response_text = re.sub(r'\*Protocol:([^*]+)\*', r'\n> 🧪 **Protocol:** \1\n', response_text)
     
     # Add troubleshooting formatting
-    response_text = re.sub(r'\*Troubleshoot:([^*]+)\*', r'<div class="troubleshoot">🔧 **Troubleshoot:** \1</div>', response_text)
+    response_text = re.sub(r'\*Troubleshoot:([^*]+)\*', r'\n> 🔧 **Troubleshoot:** \1\n', response_text)
     
     # Add validation formatting
-    response_text = re.sub(r'\*Validate:([^*]+)\*', r'<div class="validate">✓ **Validate:** \1</div>', response_text)
+    response_text = re.sub(r'\*Validate:([^*]+)\*', r'\n> ✓ **Validate:** \1\n', response_text)
     
-    # Enhanced section header formatting
-    response_text = re.sub(r'\*\*([A-Z][A-Z\s]+):\*\*', r'<h3 class="section-header">\1</h3>', response_text)
+    # Enhanced section header formatting - use proper markdown headers
+    response_text = re.sub(r'\*\*([A-Z][A-Z\s]+):\*\*', r'\n\n## \1\n', response_text)
     
     # Enhanced subsection formatting
-    response_text = re.sub(r'\*\*([A-Z][a-z\s]+):\*\*', r'<h4 class="subsection-header">\1</h4>', response_text)
+    response_text = re.sub(r'\*\*([A-Z][a-z\s]+):\*\*', r'\n\n### \1\n', response_text)
     
-    # Add parameter highlighting
-    response_text = re.sub(r'(\w+):\s*([0-9.-]+[°μM%x\s]*[A-Za-z]*)', r'<span class="parameter">\1: \2</span>', response_text)
+    # Add parameter highlighting - use bold for emphasis
+    response_text = re.sub(r'(\w+):\s*([0-9.-]+[°μM%x\s]*[A-Za-z]*)', r'**\1:** `\2`', response_text)
     
-    # Add concentration highlighting
-    response_text = re.sub(r'(\d+\.?\d*)\s*(mM|μM|nM|pM|mg/mL|μg/mL|ng/mL|U/μL|units/mL)', r'<span class="concentration">\1 \2</span>', response_text)
+    # Add concentration highlighting - use inline code for better visibility
+    response_text = re.sub(r'(\d+\.?\d*)\s*(mM|μM|nM|pM|mg/mL|μg/mL|ng/mL|U/μL|units/mL)', r'`\1 \2`', response_text)
     
     # Add temperature highlighting
-    response_text = re.sub(r'(\d+\.?\d*)\s*°C', r'<span class="temperature">\1°C</span>', response_text)
+    response_text = re.sub(r'(\d+\.?\d*)\s*°C', r'`\1°C`', response_text)
     
     # Add time highlighting
-    response_text = re.sub(r'(\d+\.?\d*)\s*(min|minute|hr|hour|sec|second|day|week)', r'<span class="time">\1 \2</span>', response_text)
+    response_text = re.sub(r'(\d+\.?\d*)\s*(min|minute|hr|hour|sec|second|day|week)', r'`\1 \2`', response_text)
     
     # Clean up excessive whitespace
     response_text = re.sub(r'\n\n+', '\n\n', response_text)
     
-    # Add confidence level indicators
-    response_text = re.sub(r'\(High confidence\)', r'<span class="confidence high">🔴 High Confidence</span>', response_text)
-    response_text = re.sub(r'\(Medium confidence\)', r'<span class="confidence medium">🟡 Medium Confidence</span>', response_text)
-    response_text = re.sub(r'\(Low confidence\)', r'<span class="confidence low">🟢 Low Confidence</span>', response_text)
+    # Add confidence level indicators - use badges
+    response_text = re.sub(r'\(High confidence\)', r'`🔴 High Confidence`', response_text)
+    response_text = re.sub(r'\(Medium confidence\)', r'`🟡 Medium Confidence`', response_text)
+    response_text = re.sub(r'\(Low confidence\)', r'`🟢 Low Confidence`', response_text)
+    
+    # Add bullet point formatting for lists
+    response_text = re.sub(r'^- ', r'• ', response_text, flags=re.MULTILINE)
+    
+    # Add numbered list formatting
+    response_text = re.sub(r'^(\d+)\. ', r'\1. ', response_text, flags=re.MULTILINE)
+    
+    # Add code block formatting for protocols
+    response_text = re.sub(r'```\n(.*?)\n```', r'```\n\1\n```', response_text, flags=re.DOTALL)
     
     return response_text.strip()
 
