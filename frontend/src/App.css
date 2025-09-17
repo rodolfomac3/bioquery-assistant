@@ -1673,21 +1673,27 @@
   }
 }
 
-/* Markdown Rendering Styles */
+/* Markdown Rendering Styles - Fixed Spacing */
+
+/* Headers with proper spacing */
 .markdown-h1 {
   font-size: 1.8em;
   font-weight: 700;
   color: #1a202c;
-  margin: 0.5em 0;
+  margin: 1.2em 0 0.6em 0;  /* Reduced top margin, consistent bottom */
   padding-bottom: 0.3em;
   border-bottom: 2px solid #e2e8f0;
+}
+
+.markdown-h1:first-child {
+  margin-top: 0;  /* No top margin if first element */
 }
 
 .markdown-h2 {
   font-size: 1.5em;
   font-weight: 600;
   color: #2d3748;
-  margin: 0.8em 0 0.4em 0;
+  margin: 1em 0 0.5em 0;  /* Balanced spacing */
   padding-bottom: 0.2em;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -1696,43 +1702,60 @@
   font-size: 1.3em;
   font-weight: 600;
   color: #4a5568;
-  margin: 0.6em 0 0.3em 0;
+  margin: 0.9em 0 0.4em 0;  /* Proportional spacing */
 }
 
 .markdown-h4 {
   font-size: 1.1em;
   font-weight: 600;
   color: #4a5568;
-  margin: 0.5em 0 0.2em 0;
+  margin: 0.8em 0 0.3em 0;  /* Slightly less than h3 */
 }
 
 .markdown-h5, .markdown-h6 {
   font-size: 1em;
   font-weight: 600;
   color: #4a5568;
-  margin: 0.4em 0 0.2em 0;
+  margin: 0.7em 0 0.3em 0;  /* Minimal but clear spacing */
 }
 
+/* Paragraphs with consistent spacing */
 .markdown-p {
-  margin: 0.5em 0;
+  margin: 0 0 0.8em 0;  /* Only bottom margin for consistent flow */
+  line-height: 1.7;  /* Slightly increased for readability */
+  color: #2d3748;
+}
+
+.markdown-p:last-child {
+  margin-bottom: 0;  /* Remove bottom margin from last paragraph */
+}
+
+/* Lists with proper spacing */
+.markdown-ul, .markdown-ol {
+  margin: 0 0 0.8em 0;  /* Consistent with paragraphs */
+  padding-left: 1.8em;  /* Slightly increased for clarity */
+}
+
+.markdown-li {
+  margin: 0 0 0.4em 0;  /* Space between items */
   line-height: 1.6;
   color: #2d3748;
 }
 
-.markdown-ul, .markdown-ol {
-  margin: 0.5em 0;
-  padding-left: 1.5em;
+.markdown-li:last-child {
+  margin-bottom: 0;  /* No margin on last item */
 }
 
-.markdown-li {
-  margin: 0.3em 0;
-  line-height: 1.5;
-  color: #2d3748;
+/* Nested lists */
+.markdown-li > .markdown-ul,
+.markdown-li > .markdown-ol {
+  margin: 0.4em 0 0.4em 0;  /* Tighter spacing for nested lists */
 }
 
+/* Blockquotes with balanced margins */
 .markdown-blockquote {
-  margin: 1em 0;
-  padding: 0.8em 1em;
+  margin: 1em 0;  /* Consistent top and bottom */
+  padding: 0.8em 1.2em;  /* Comfortable internal padding */
   background: #f7fafc;
   border-left: 4px solid #3182ce;
   border-radius: 0 8px 8px 0;
@@ -1740,24 +1763,36 @@
   font-style: italic;
 }
 
+.markdown-blockquote > *:first-child {
+  margin-top: 0;  /* Remove top margin from first child */
+}
+
+.markdown-blockquote > *:last-child {
+  margin-bottom: 0;  /* Remove bottom margin from last child */
+}
+
+/* Inline code with subtle spacing */
 .markdown-code {
   background: #f1f5f9;
   color: #e53e3e;
-  padding: 0.2em 0.4em;
+  padding: 0.15em 0.35em;  /* Reduced padding for inline flow */
   border-radius: 4px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.9em;
   border: 1px solid #e2e8f0;
+  margin: 0 0.1em;  /* Tiny horizontal margins */
 }
 
+/* Code blocks with proper spacing */
 .markdown-pre {
   background: #1a202c;
   color: #e2e8f0;
-  padding: 1em;
+  padding: 1.2em;  /* Comfortable padding */
   border-radius: 8px;
   overflow-x: auto;
-  margin: 1em 0;
+  margin: 1em 0;  /* Same as blockquotes */
   border: 1px solid #2d3748;
+  line-height: 1.5;
 }
 
 .markdown-pre code {
@@ -1766,8 +1801,10 @@
   padding: 0;
   border: none;
   font-size: 0.9em;
+  margin: 0;  /* No margins for code inside pre */
 }
 
+/* Text formatting */
 .markdown-strong {
   font-weight: 700;
   color: #1a202c;
@@ -1778,10 +1815,11 @@
   color: #4a5568;
 }
 
+/* Tables with proper spacing */
 .markdown-table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1em 0;
+  margin: 1em 0;  /* Consistent with other blocks */
   background: white;
   border-radius: 8px;
   overflow: hidden;
@@ -1793,7 +1831,7 @@
 }
 
 .markdown-th {
-  padding: 0.8em 1em;
+  padding: 0.75em 1em;  /* Balanced padding */
   text-align: left;
   font-weight: 600;
   color: #2d3748;
@@ -1801,19 +1839,31 @@
 }
 
 .markdown-td {
-  padding: 0.8em 1em;
+  padding: 0.75em 1em;  /* Match header padding */
   border-bottom: 1px solid #e2e8f0;
   color: #4a5568;
+}
+
+.markdown-tr:last-child .markdown-td {
+  border-bottom: none;  /* Remove border from last row */
 }
 
 .markdown-tr:hover {
   background: #f7fafc;
 }
 
-/* Special formatting for scientific content */
+/* Horizontal rules */
+.markdown-hr {
+  margin: 1.5em 0;  /* Clear separation */
+  border: none;
+  border-top: 2px solid #e2e8f0;
+}
+
+/* Special formatting for scientific content - adjusted spacing */
 .markdown-blockquote:has(> strong:first-child) {
   background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
   border-left-color: #e53e3e;
+  margin: 1em 0;  /* Consistent margins */
 }
 
 .markdown-blockquote:has(> strong:first-child:contains("Note")) {
@@ -1831,44 +1881,143 @@
   border-left-color: #3182ce;
 }
 
-.markdown-blockquote:has(> strong:first-child:contains("Critical")) {
-  background: linear-gradient(135deg, #fef5e7 0%, #f6ad55 100%);
-  border-left-color: #dd6b20;
+/* Adjacent element spacing rules */
+.markdown-h1 + .markdown-p,
+.markdown-h2 + .markdown-p,
+.markdown-h3 + .markdown-p,
+.markdown-h4 + .markdown-p,
+.markdown-h5 + .markdown-p,
+.markdown-h6 + .markdown-p {
+  margin-top: 0;  /* No extra space after headers */
 }
 
-.markdown-blockquote:has(> strong:first-child:contains("Protocol")) {
-  background: linear-gradient(135deg, #f7fafc 0%, #e2e8f0 100%);
-  border-left-color: #4a5568;
+.markdown-p + .markdown-h1,
+.markdown-p + .markdown-h2,
+.markdown-p + .markdown-h3 {
+  margin-top: 1.2em;  /* Extra space before major headers */
 }
 
-.markdown-blockquote:has(> strong:first-child:contains("Troubleshoot")) {
-  background: linear-gradient(135deg, #fef7ff 0%, #e9d8fd 100%);
-  border-left-color: #805ad5;
+.markdown-p + .markdown-h4,
+.markdown-p + .markdown-h5,
+.markdown-p + .markdown-h6 {
+  margin-top: 1em;  /* Moderate space before minor headers */
 }
 
-.markdown-blockquote:has(> strong:first-child:contains("Validate")) {
-  background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
-  border-left-color: #38a169;
+.markdown-ul + .markdown-p,
+.markdown-ol + .markdown-p,
+.markdown-p + .markdown-ul,
+.markdown-p + .markdown-ol {
+  margin-top: 0.8em;  /* Standard spacing between lists and paragraphs */
 }
 
-.markdown-blockquote:has(> strong:first-child:contains("Success")) {
-  background: linear-gradient(135deg, #f0fff4 0%, #9ae6b4 100%);
-  border-left-color: #38a169;
+.markdown-blockquote + .markdown-blockquote {
+  margin-top: 0.5em;  /* Reduced spacing between consecutive blockquotes */
 }
 
-/* Code highlighting for scientific parameters */
-.markdown-code:contains("mM"), .markdown-code:contains("μM"), .markdown-code:contains("°C") {
+.markdown-pre + .markdown-p,
+.markdown-p + .markdown-pre {
+  margin-top: 0.8em;  /* Standard spacing around code blocks */
+}
+
+/* Definition lists (if used) */
+.markdown-dl {
+  margin: 0 0 0.8em 0;
+}
+
+.markdown-dt {
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0.5em 0 0.2em 0;
+}
+
+.markdown-dd {
+  margin: 0 0 0.5em 1.5em;
+  color: #4a5568;
+}
+
+/* Links */
+.markdown-a {
+  color: #3182ce;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.markdown-a:hover {
+  color: #2c5aa0;
+  text-decoration: underline;
+}
+
+/* Images */
+.markdown-img {
+  max-width: 100%;
+  height: auto;
+  margin: 1em 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Code highlighting for scientific parameters - maintain original */
+.markdown-code:contains("mM"), 
+.markdown-code:contains("μM"), 
+.markdown-code:contains("°C"),
+.markdown-code:contains("pH"),
+.markdown-code:contains("rpm"),
+.markdown-code:contains("g/L") {
   background: #e6fffa;
   color: #234e52;
   border-color: #38b2ac;
 }
 
-/* Responsive markdown */
+/* Responsive markdown - adjusted for better mobile spacing */
 @media (max-width: 768px) {
-  .markdown-h1 { font-size: 1.5em; }
-  .markdown-h2 { font-size: 1.3em; }
-  .markdown-h3 { font-size: 1.2em; }
-  .markdown-h4 { font-size: 1.1em; }
-  .markdown-pre { font-size: 0.8em; }
-  .markdown-table { font-size: 0.9em; }
+  .markdown-h1 { 
+    font-size: 1.5em;
+    margin: 1em 0 0.5em 0;
+  }
+  .markdown-h2 { 
+    font-size: 1.3em;
+    margin: 0.9em 0 0.4em 0;
+  }
+  .markdown-h3 { 
+    font-size: 1.2em;
+    margin: 0.8em 0 0.3em 0;
+  }
+  .markdown-h4 { 
+    font-size: 1.1em;
+    margin: 0.7em 0 0.3em 0;
+  }
+  .markdown-p {
+    margin: 0 0 0.7em 0;
+    line-height: 1.6;
+  }
+  .markdown-pre { 
+    font-size: 0.85em;
+    padding: 1em;
+  }
+  .markdown-table { 
+    font-size: 0.9em;
+  }
+  .markdown-th,
+  .markdown-td {
+    padding: 0.6em 0.8em;
+  }
+  .markdown-blockquote {
+    padding: 0.7em 1em;
+    margin: 0.8em 0;
+  }
+}
+
+/* Ensure proper spacing in message containers */
+.message-text .markdown-h1:first-child,
+.message-text .markdown-h2:first-child,
+.message-text .markdown-h3:first-child,
+.message-text .markdown-p:first-child {
+  margin-top: 0;  /* No top margin for first element in message */
+}
+
+.message-text .markdown-p:last-child,
+.message-text .markdown-ul:last-child,
+.message-text .markdown-ol:last-child,
+.message-text .markdown-blockquote:last-child {
+  margin-bottom: 0;  /* No bottom margin for last element in message */
 }
